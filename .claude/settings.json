@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "deny": ["Bash(rm -rf *)", "Bash(sudo *)"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pre-tool-use.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-verify.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}

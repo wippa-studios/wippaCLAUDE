@@ -1,0 +1,12 @@
+# The acceptance command for this project.
+#
+# One command, run from the project root. The Stop hook runs it through
+# scripts/verify.mjs and blocks completion until it exits 0.
+#
+# Replace the example below with the command that decides whether the work is
+# done. Shell separators, pipes, redirection, command substitution and `$` are
+# refused by the gate. Use one command, or an `&&` chain of allowlisted command
+# words.
+#
+# Lines beginning with # are ignored. Exactly one command is expected.
+npm test

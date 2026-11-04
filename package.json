@@ -1,0 +1,16 @@
+{
+  "name": "wippa-claude",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude Code adapter for the wippa agent set: the primary orchestrator, twelve specialist subagents, the playbooks as skills, and hooks that enforce the write, shell and acceptance limits.",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/check.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
