@@ -4,10 +4,12 @@
 // Reads the hook payload as JSON on stdin. Exit 0 allows the tool call; exit 2
 // blocks it and shows the message on stderr to the model.
 //
-// The main session agent is the orchestrator. It may write exactly one file,
-// <project>/.wippa/PLAN.md, and run exactly two kinds of command: read-only git
-// (diff, status, log, show) and `node scripts/verify.mjs`. Subagents may write
-// unless they are reviewers or research roles, and never delegate.
+// The main session agent is the orchestrator. The hook recognises it by an
+// absent agent_type, or by main, primary or wippaAGENT. It may write exactly
+// one file, <project>/.wippa/PLAN.md, and run exactly two kinds of command:
+// read-only git (diff, status, log, show) and `node scripts/verify.mjs`.
+// Subagents may write unless they are reviewers or research roles, and never
+// delegate.
 //
 // This is a policy gate, not a sandbox. Path confinement is lexical: a symlink
 // at .wippa/PLAN.md is not detected, and that limitation is published in the
@@ -70,12 +72,9 @@ function targetPath(input) {
 const input = readInput()
 const tool = typeof input.tool_name === "string" ? input.tool_name : ""
 const rawType = input.agent_type
+const mainType = rawType === undefined || rawType === null || rawType === "" ? "" : normaliseType(rawType)
 const isOrchestrator =
-  rawType === undefined ||
-  rawType === null ||
-  rawType === "" ||
-  normaliseType(rawType) === "main" ||
-  normaliseType(rawType) === "primary"
+  mainType === "" || mainType === "main" || mainType === "primary" || mainType === "wippaAGENT"
 
 if (isOrchestrator) {
   if (EDIT_TOOLS.has(tool)) {
@@ -112,7 +111,9 @@ if (isOrchestrator) {
     const readOnlyGit =
       words[0] === "git" && ["diff", "status", "log", "show"].includes(words[1]) && words.length >= 2
     const writes = words.some((word) =>
-      ["--output", "--ext-diff", "--textconv", "--upload-pack"].some((flag) => word === flag || word.startsWith(`${flag}=`)),
+      ["--output", "--ext-diff", "--textconv", "--upload-pack", "--open-files-in-pager"].some(
+        (flag) => word === flag || word.startsWith(`${flag}=`),
+      ),
     )
     if (readOnlyGit && !writes && !command.includes("::")) process.exit(0)
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Install the wippaCLAUDE adapter into one project directory.
 #
-# Copies .claude/ and scripts/ into the project, creates .wippa/ when it is
-# absent, and never overwrites an existing .wippa/PLAN.md or .wippa/acceptance.
+# Copies CLAUDE.md, .claude/ and scripts/ into the project, creates .wippa/ when
+# it is absent, and never overwrites an existing .wippa/PLAN.md or
+# .wippa/acceptance.
 # It does not install globally: Claude Code reads the project's .claude/
 # directory, so a project-local install is the only scope this adapter has.
 
@@ -14,11 +15,14 @@ Usage: install.sh [--project DIR] [--dry-run] [--force]
 
   --project DIR   Install into DIR. Defaults to the current directory.
   --dry-run       Print every planned action and write nothing.
-  --force         Overwrite files that already exist under .claude/ and scripts/.
+  --force         Overwrite an existing CLAUDE.md and existing files under
+                  .claude/ and scripts/.
   -h, --help      Print this help.
 
 Files are copied from the checkout that contains this script. Existing files are
-skipped unless --force is given. .wippa/PLAN.md is never overwritten, and
+skipped unless --force is given. CLAUDE.md is copied to the project root; if the
+project already has one, it is skipped and you must merge the orchestrator
+section into it by hand. .wippa/PLAN.md is never overwritten, and
 .wippa/acceptance is never created or changed.
 EOF
 }
@@ -69,8 +73,8 @@ fi
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project="$(cd "$project" && pwd)"
 
-if [ ! -d "$source_dir/.claude" ] || [ ! -d "$source_dir/scripts" ]; then
-  printf 'install: the checkout at %s is missing .claude/ or scripts/\n' "$source_dir" >&2
+if [ ! -f "$source_dir/CLAUDE.md" ] || [ ! -d "$source_dir/.claude" ] || [ ! -d "$source_dir/scripts" ]; then
+  printf 'install: the checkout at %s is missing CLAUDE.md, .claude/ or scripts/\n' "$source_dir" >&2
   exit 1
 fi
 
@@ -114,6 +118,8 @@ while IFS= read -r src; do
   relative="${src#"$source_dir"/}"
   copy_file "$src" "$project/$relative"
 done < <(find "$source_dir/.claude" "$source_dir/scripts" -type f | LC_ALL=C sort)
+
+copy_file "$source_dir/CLAUDE.md" "$project/CLAUDE.md"
 
 wippa_dir="$project/.wippa"
 

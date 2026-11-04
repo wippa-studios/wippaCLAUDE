@@ -4,7 +4,7 @@ The Claude Code adapter for the wippa agent set. One primary orchestrator, twelv
 
 The orchestrator plans, delegates through the Agent tool, reviews the diff, and reports. It does not write the implementation, and it does not run the build. A `PreToolUse` hook confines its writes to the plan ledger and its shell to read-only git plus the acceptance gate. A `Stop` hook refuses to let the session finish until the project's acceptance command exits 0.
 
-This repository is the adapter source. It is installed into a project, not used as a runtime of its own. The roles, routing rules, review contract and playbook text come from `wippaCORE` 0.1.0; this repository supplies the Claude Code mapping and the enforcement.
+This repository is the adapter source. It is installed into a project, not used as a runtime of its own. The roles, routing rules, review contract and playbook text come from `wippaCORE` 0.1.x; this repository supplies the Claude Code mapping and the enforcement.
 
 ## Requirements
 
@@ -26,7 +26,9 @@ With no `--project`, the current directory is used:
 ./install.sh
 ```
 
-The installer copies `.claude/` and `scripts/` into the project. If a target already exists it is skipped and reported; pass `--force` to overwrite those files. It creates `.wippa/` when absent and copies the ledger template and the acceptance example. It never overwrites an existing `.wippa/PLAN.md`, and it never creates or changes `.wippa/acceptance`.
+The installer copies `CLAUDE.md`, `.claude/` and `scripts/` into the project. `CLAUDE.md` goes to the project root as the session prompt. If a target already exists it is skipped and reported; pass `--force` to overwrite those files. It creates `.wippa/` when absent and copies the ledger template and the acceptance example. It never overwrites an existing `.wippa/PLAN.md`, and it never creates or changes `.wippa/acceptance`.
+
+If the project already has a `CLAUDE.md`, the installer skips it. Merge the orchestrator section into your existing file by hand; `--force` would replace the whole file.
 
 Preview without writing:
 
@@ -63,7 +65,7 @@ The first table is enforced by the host, given that `.claude/settings.json` is t
 | Guarantee | Mechanism |
 |---|---|
 | The orchestrator cannot edit outside `.wippa/PLAN.md` | `PreToolUse` resolves `file_path` and `notebook_path` for `Edit`, `Write` and `NotebookEdit` and blocks anything but the ledger path |
-| The orchestrator cannot run arbitrary shell | `PreToolUse` allows only `git diff`, `git status`, `git log`, `git show` and the exact command `node scripts/verify.mjs`; separators, redirection and substitution are refused |
+| The orchestrator cannot run arbitrary shell | `PreToolUse` allows only `git diff`, `git status`, `git log`, `git show` and the exact command `node scripts/verify.mjs`; separators, redirection and substitution are refused, and so are git flags that write, such as `--output` and `--open-files-in-pager` |
 | Reviewers and research roles cannot use the edit tools | `quality-auditor`, `security-reviewer`, `research-analyst` and `product-strategist` have no `Edit` or `Write` in their `tools`, and the hook blocks the tools if they are reached another way |
 | Research and product roles cannot run a shell | No `Bash` in their `tools`, and the hook blocks it |
 | Subagents cannot delegate | `Agent` is absent from every subagent's `tools`, and the hook blocks the tool |
@@ -71,10 +73,11 @@ The first table is enforced by the host, given that `.claude/settings.json` is t
 | Completion is blocked until acceptance exits 0, when `.wippa/acceptance` exists | `Stop` runs `node scripts/verify.mjs`; a non-zero exit returns to the model |
 | `rm -rf` and `sudo` are denied | `permissions.deny` in `.claude/settings.json` |
 
-Three limits on the enforcement:
+Four limits on the enforcement:
 
 - Path confinement is lexical. The hook resolves `..` and compares the result, but a symlink at `.wippa/PLAN.md` is not detected. Symlink and hardlink protections are an OpenCode feature that was not ported.
 - The Bash rule is a policy, not a parser. It refuses separators, redirection and substitution and then checks the first two words. A command that passes still runs with your authority, and the acceptance gate has its own, smaller allowlist.
+- The hook recognises the orchestrator by an absent `agent_type`, or by `main`, `primary` or `wippaAGENT`. A host that reports a different value for the main agent is treated as a subagent: its ledger write and its read-only git commands are blocked.
 - Reviewers keep `Bash` so they can read a diff. The edit denial covers `Edit`, `Write` and `NotebookEdit`; a shell command that writes a file is not intercepted. Treat a reviewer's shell as read-only by instruction, not by enforcement.
 
 ### Convention

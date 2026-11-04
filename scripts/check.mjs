@@ -271,6 +271,14 @@ if (isFile("CLAUDE.md")) {
   assert(text.includes("You report only to me"), "CLAUDE.md: must carry the closing line for delegation briefs")
 }
 
+if (isFile("install.sh")) {
+  const text = read("install.sh")
+  assert(
+    text.includes('copy_file "$source_dir/CLAUDE.md" "$project/CLAUDE.md"'),
+    "install.sh: must copy CLAUDE.md to the project root through copy_file",
+  )
+}
+
 if (isFile(".github/workflows/ci.yml")) {
   const text = read(".github/workflows/ci.yml")
   assert(text.includes("node scripts/check.mjs"), "ci.yml: must run node scripts/check.mjs")
