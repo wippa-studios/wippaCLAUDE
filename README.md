@@ -171,6 +171,11 @@ bash -n install.sh
 
 `check.mjs` asserts the twelve agent files and their tool lists, the two hooks in `settings.json`, the six skill folders, the scripts, and the top-level documents. It is a structural check: it proves the files agree with each other, not that a Claude Code session behaves as described.
 
+## Related repositories
+
+- [`wippaAGENT`](https://github.com/wippa-studios/wippaAGENT) is the OpenCode reference adapter for the same core.
+- [`wippaCORE`](https://github.com/wippa-studios/wippaCORE) is the framework-neutral core at 0.1.1 that this adapter implements.
+
 ## Licence
 
 MIT. See [`LICENSE`](LICENSE).
